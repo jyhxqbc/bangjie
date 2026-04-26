@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>ASIN 变动追踪系统 (V10.14 完美体验版)</title>
+    <style>
+        body { font-family: -apple-system, sans-serif; background: #f0f2f5; padding: 15px; color: #333; margin: 0;}
+        .header-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; background: white; padding: 15px 20px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        .header-bar h2 { margin: 0; color: #1e293b; font-size: 20px; }
+        
+        /* 🌟 核心修复：为所有按钮添加极其丝滑的全局物理阻尼触感 */
+        button { transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1); cursor: pointer; outline: none; }
+        button:active:not(:disabled) { transform: scale(0.96) translateY(2px); box-shadow: inset 0 3px 5px rgba(0,0,0,0.15); filter: brightness(0.92); }
+        
+        .btn-sync { background: #f59e0b; color: white; border: none; padding: 10px 20px; border-radius: 6px; font-weight: bold; font-size: 14px;}
+        .btn-sync:disabled { background: #cbd5e1; cursor: not-allowed; transform: none; box-shadow: none; filter: none; }
+        .zipcode-banner { background: #fee2e2; border-left: 4px solid #ef4444; padding: 10px 15px; color: #991b1b; font-weight: bold; font-size: 14px; margin-bottom: 15px; border-radius: 4px; display: flex; justify-content: space-between; align-items: center;}
+        .tab-container { background: white; padding: 15px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        .tabs { border-bottom: 2px solid #e2e8f0; margin-bottom: 15px; display: flex; gap: 10px; }
+        .tab-btn { padding: 10px 20px; border: none; background: #f8fafc; font-size: 14px; font-weight: bold; color: #64748b; border-radius: 6px 6px 0 0; }
+        .tab-btn.active { background: #3b82f6; color: white; }
+        .panel { display: none; }
+        .panel.active { display: block; }
+        .input-group { background: #f8fafc; padding: 15px; border-radius: 8px; margin-bottom: 15px; display: flex; gap: 15px; align-items: stretch; border: 1px solid #e2e8f0; }
+        input[type="text"], textarea { padding: 8px; border: 1px solid #cbd5e1; border-radius: 4px; font-family: inherit; }
+        
+        .toolbar { display: flex; justify-content: space-between; margin-bottom: 10px; align-items: center; }
+        .search-box { width: 300px; padding: 8px 12px; border: 1px solid #3b82f6; border-radius: 6px; font-size: 13px; outline: none; }
+        .btn-danger { background: #ef4444; color: white; border: none; padding: 8px 15px; border-radius: 4px; font-weight: bold; font-size: 13px; }
+        .btn-run-single { background: #10b981; color: white; border: none; padding: 8px 15px; border-radius: 4px; font-weight: bold; font-size: 13px; margin-left: 10px;}
+        .btn-excel { background: #3b82f6; color: white; border: none; padding: 8px 15px; border-radius: 4px; font-weight: bold; font-size: 13px; margin-left: 10px;}
+        .btn-import { background: #8b5cf6; color: white; border: none; padding: 8px 15px; border-radius: 4px; font-weight: bold; font-size: 13px; margin-left: 10px;}
+
+        /* 防撕裂冻结表格样式 */
+        .table-wrapper { overflow: auto; max-height: 600px; border: 1px solid #e2e8f0; background: white;}
+        table { width: max-content; min-width: 100%; border-collapse: separate; border-spacing: 0; font-size: 12px; text-align: center; white-space: nowrap; }
+        th, td { padding: 6px 8px; border-right: 1px solid #e2e8f0; border-bottom: 1px solid #e2e8f0; vertical-align: middle; background: white;}
+        th { border-top: 1px solid #e2e8f0; background: #3b82f6; color: white; position: sticky; top: 0; z-index: 20; cursor: pointer; user-select: none; border-right: 1px solid #93c5fd; transition: background 0.2s;}
+        th:hover { background: #2563eb; }
+        td:first-child, th:first-child { border-left: 1px solid #e2e8f0; }
+        tr:hover td { background-color: #f1f5f9; }
+        tr:hover td.fix-col { background-color: #e2e8f0; }
+
+        .fix-col { position: sticky; z-index: 10; }
+        th.fix-col { z-index: 30; } 
+        .shadow-right { box-shadow: 3px 0 5px -2px rgba(0,0,0,0.15); }
+
+        .fix-1-1 { left: 0; min-width: 30px; max-width: 30px; }
+        .fix-1-2 { left: 47px; min-width: 40px; max-width: 40px; }
+        .fix-1-3 { left: 104px; min-width: 100px; max-width: 100px; }
+        .fix-1-4 { left: 221px; min-width: 150px; max-width: 150px; }
+
+        .fix-2-1 { left: 0; min-width: 30px; max-width: 30px; }
+        .fix-2-2 { left: 47px; min-width: 40px; max-width: 40px; }
+        .fix-2-3 { left: 104px; min-width: 40px; max-width: 40px; }
+        .fix-2-4 { left: 161px; min-width: 110px; max-width: 110px; }
+        .fix-2-5 { left: 288px; min-width: 70px; max-width: 70px; }
+
+        .remark-input { width: 90%; padding: 4px; border: 1px solid transparent; background: transparent; text-align: center; font-size: 12px; }
+        .remark-input:focus { border: 1px solid #3b82f6; background: white; outline: none; }
+        .rank-up { color: #10b981; font-weight: bold; }
+        .rank-down { color: #ef4444; font-weight: bold; }
+        .changed-cell { background-color: #fffbeb; color: #b45309; font-weight: bold; border: 2px solid #f59e0b; box-sizing: border-box;}
+        .sort-icon { font-size: 11px; margin-left: 5px; color: #bae6fd; display: inline-block; width: 12px; }
+
+        /* 模态框样式 */
+        .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 999; display: flex; justify-content: center; align-items: center; }
+        .modal-content { background: white; padding: 20px 25px; border-radius: 8px; width: 600px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
+        .modal-content h3 { margin-top: 0; color: #1e293b; font-size: 18px; }
+        .modal-content p { color: #64748b; font-size: 13px; line-height: 1.5; }
+        
+        /* 新增：ASIN 快捷过滤标签样式 */
+        .asin-tags-container { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 15px; padding: 10px 15px; background: #f8fafc; border-radius: 6px; border: 1px dashed #cbd5e1; align-items: center;}
+        .asin-tag { padding: 4px 12px; background: white; border: 1px solid #cbd5e1; border-radius: 15px; font-size: 12px; font-weight: bold; color: #475569; cursor: pointer; transition: all 0.2s; user-select: none; }
+        .asin-tag:hover { border-color: #3b82f6; color: #3b82f6; background: #eff6ff; box-shadow: 0 2px 4px rgba(59, 130, 246, 0.1); }
+        .asin-tag.active { background: #3b82f6; color: white; border-color: #3b82f6; box-shadow: 0 2px 4px rgba(59, 130, 246, 0.2); }
+        .asin-tags-label { font-size: 12px; color: #94a3b8; font-weight: bold; margin-right: 5px; display: flex; align-items: center; }
+    </style>
+</head>
+<body>
+    <div class="zipcode-banner">
+        <span>📍 提示：当前为无痕纯净模式。为确保数据准确，请先在新标签页打开对应站点的 Amazon 主页，并设置目的国邮编 (如美国10001，英国E1 7AA等)，然后再抓取！</span>
+        <button onclick="this.parentElement.style.display='none'" style="background:none;border:none;color:#991b1b;cursor:pointer;">✖</button>
+    </div>
+
+    <div class="header-bar">
+        <h2>📊 BLK ASIN 追踪系统 V10.14</h2>
+        <div style="display: flex; gap: 15px; align-items: center;">
+            <a id="exportJsonLnk" href="#" style="color: #3b82f6; text-decoration: none; font-size: 14px; font-weight: bold; background: #eff6ff; padding: 6px 12px; border-radius: 6px;">☁️ 备份导出全部数据</a>
+            <a id="importJsonLnk" href="#" style="color: #10b981; text-decoration: none; font-size: 14px; font-weight: bold; background: #ecfdf5; padding: 6px 12px; border-radius: 6px;">📥 恢复导入全部数据</a>
+            <input type="file" id="importJsonInput" style="display:none;" accept=".json">
+            
+            <div style="display: flex; align-items: center; gap: 8px; background: #f8fafc; padding: 5px 12px; border-radius: 8px; border: 1px solid #e2e8f0; margin-left: 10px;">
+                <label style="font-size: 13px; font-weight: bold; color: #475569;">并发线程:</label>
+                <input type="number" id="trackerThreadInput" value="3" min="1" max="10" style="width: 50px; padding: 4px; border: 1px solid #cbd5e1; border-radius: 4px; font-weight: bold; text-align: center; outline: none;">
+                <span style="font-size: 11px; color: #94a3b8;">(建议1-5)</span>
+            </div>
+
+            <button id="syncAllBtn" class="btn-sync" style="margin-left: 10px;">▶ 一键抓取全部任务 (功能1+2)</button>
+        </div>
+    </div>
+
+    <div class="tab-container">
+        <div class="tabs">
+            <button class="tab-btn active" data-target="panel-rank">功能1: 自然排名跟进</button>
+            <button class="tab-btn" data-target="panel-detail">功能2: ASIN 详情快照监控</button>
+        </div>
+
+        <div id="panel-rank" class="panel active">
+            <div class="input-group">
+                <select id="rankSiteSelect" style="padding: 8px; border: 1px solid #cbd5e1; border-radius: 4px; font-weight: bold; outline: none;">
+                    <option value="US|amazon.com">🇺🇸 US</option>
+                    <option value="CA|amazon.ca">🇨🇦 CA</option>
+                    <option value="UK|amazon.co.uk">🇬🇧 UK</option>
+                    <option value="DE|amazon.de">🇩🇪 DE</option>
+                    <option value="FR|amazon.fr">🇫🇷 FR</option>
+                    <option value="IT|amazon.it">🇮🇹 IT</option>
+                    <option value="ES|amazon.es">🇪🇸 ES</option>
+                    <option value="JP|amazon.co.jp">🇯🇵 JP</option>
+                    <option value="AU|amazon.com.au">🇦🇺 AU</option>
+                </select>
+                <input type="text" id="rankAsin" placeholder="输入1个ASIN..." style="width: 150px; font-weight: bold;">
+                <textarea id="rankKws" placeholder="输入追踪关键词，一行一个..." style="flex: 1; height: 40px; resize: none;"></textarea>
+                <button id="addRankTaskBtn" style="background: #3b82f6; color: white; border: none; border-radius: 4px; cursor: pointer; padding: 0 20px; font-weight: bold;">添加任务</button>
+            </div>
+            
+            <div class="toolbar">
+                <input type="text" id="rankSearchInput" class="search-box" placeholder="🔍 搜索 ASIN 或 关键词...">
+                <div>
+                    <button id="delRankBtn" class="btn-danger">🗑️ 删除</button>
+                    <button id="exportRankExcelBtn" class="btn-excel">📤 导出报表</button>
+                    <button id="openRankImportModalBtn" class="btn-import">📥 批量覆盖备注(粘贴版)</button>
+                    <button id="syncRankBtn" class="btn-run-single">▶ 单独运行功能1</button>
+                </div>
+            </div>
+            <div id="rankAsinTags" class="asin-tags-container" style="display: none;"></div>
+
+            <div class="table-wrapper">
+                <table id="rankTable">
+                    <thead><tr id="rankTableHead"></tr></thead>
+                    <tbody id="rankTableBody"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <div id="panel-detail" class="panel">
+            <div class="input-group">
+                <select id="detailSiteSelect" style="padding: 8px; border: 1px solid #cbd5e1; border-radius: 4px; font-weight: bold; outline: none;">
+                    <option value="US|amazon.com">🇺🇸 US</option>
+                    <option value="CA|amazon.ca">🇨🇦 CA</option>
+                    <option value="UK|amazon.co.uk">🇬🇧 UK</option>
+                    <option value="DE|amazon.de">🇩🇪 DE</option>
+                    <option value="FR|amazon.fr">🇫🇷 FR</option>
+                    <option value="IT|amazon.it">🇮🇹 IT</option>
+                    <option value="ES|amazon.es">🇪🇸 ES</option>
+                    <option value="JP|amazon.co.jp">🇯🇵 JP</option>
+                    <option value="AU|amazon.com.au">🇦🇺 AU</option>
+                </select>
+                <textarea id="detailAsins" placeholder="输入需要监控的ASIN，一行一个..." style="flex: 1; height: 40px; resize: none;"></textarea>
+                <button id="addDetailTaskBtn" style="background: #8b5cf6; color: white; border: none; border-radius: 4px; cursor: pointer; padding: 0 20px; font-weight: bold;">添加监控</button>
+            </div>
+            
+            <div class="toolbar">
+                <input type="text" id="detailSearchInput" class="search-box" placeholder="🔍 搜索 ASIN、品牌或卖家...">
+                <div>
+                    <button id="delDetailBtn" class="btn-danger">🗑️ 删除</button>
+                    <button id="exportDetailExcelBtn" class="btn-excel">📤 导出报表</button>
+                    <button id="openImportModalBtn" class="btn-import">📥 批量覆盖备注(粘贴版)</button>
+                    <button id="syncDetailBtn" class="btn-run-single">▶ 单独运行功能2</button>
+                </div>
+            </div>
+            <div id="detailAsinTags" class="asin-tags-container" style="display: none;"></div>
+
+            <div class="table-wrapper">
+                <table id="detailTable">
+                    <thead><tr id="detailTableHead"></tr></thead>
+                    <tbody id="detailTableBody"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+
+    <div id="importModal" class="modal-overlay" style="display:none;">
+        <div class="modal-content">
+            <h3>📥 批量导入/覆盖备注 (Excel 直接粘贴)</h3>
+            <p>使用方法：在您导出的 Excel 表格中填写好备注后，直接选中多行数据（<strong>必须包含表头</strong>），然后 <code>Ctrl+C</code> 复制，在下方输入框内 <code>Ctrl+V</code> 粘贴即可。<br>
+            <span id="importHintText" style="color:#ef4444; font-weight:bold;">※ 系统会自动匹配对应的维度进行覆盖。</span></p>
+            <textarea id="importPasteArea" placeholder="在此处粘贴 Excel 内容..." style="width: 100%; height: 180px; resize: none; border: 2px dashed #8b5cf6; padding: 10px; box-sizing: border-box;"></textarea>
+            <div style="text-align: right; margin-top: 15px; display: flex; justify-content: space-between;">
+                <span id="importParseMsg" style="color: #0f766e; font-size: 12px; line-height: 34px;"></span>
+                <div>
+                    <button class="btn-danger" id="closeImportModalBtn" style="background: #94a3b8;">取消</button>
+                    <button class="btn-import" id="confirmImportBtn">确定导入</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="tracker.js"></script>
+</body>
+</html>
